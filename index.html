@@ -738,6 +738,27 @@
 
     /* PAGINATION DEMO */
     .pagination-demo { display: flex; align-items: center; justify-content: center; gap: .35rem; flex-wrap: wrap }
+    .pg-content {
+      display: flex; flex-direction: column; gap: .38rem;
+      margin-bottom: .75rem;
+    }
+    .pg-row {
+      display: flex; align-items: center; gap: .6rem;
+      padding: .38rem .6rem;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+      border-radius: var(--r-sm); font-size: .62rem;
+      transition: opacity 250ms ease, transform 250ms ease;
+    }
+    .pg-row__id   { color: var(--t2); font-size: .55rem; min-width: 2.4rem }
+    .pg-row__name { flex: 1; color: var(--t1) }
+    .pg-row__badge {
+      font-size: .5rem; padding: .1rem .45rem; border-radius: 99px; font-weight: 700;
+    }
+    .pg-row__badge--ok   { background: rgba(76,175,136,.15); color: var(--ok) }
+    .pg-row__badge--info { background: rgba(90,180,224,.15); color: var(--info) }
+    .pg-row__badge--err  { background: rgba(224,90,90,.15);  color: var(--err) }
+    .pg-content.pg-exit .pg-row  { opacity: 0; transform: translateY(-4px) }
+    .pg-content.pg-enter .pg-row { opacity: 0; transform: translateY(4px) }
     .pg-btn {
       min-width: 28px; height: 28px; padding: 0 .4rem;
       display: flex; align-items: center; justify-content: center;
@@ -1543,6 +1564,11 @@
       <h2 class="card__title">Pagination</h2>
       <p class="card__desc">Suddivide un dataset ampio in pagine discrete, consentendo all'utente di scorrere in sequenza o saltare direttamente a un numero di pagina.</p>
       <div class="card__demo">
+        <div class="pg-content">
+          <div class="pg-row"><span class="pg-row__id">#001</span><span class="pg-row__name">Componente Alpha</span><span class="pg-row__badge pg-row__badge--ok">Attivo</span></div>
+          <div class="pg-row"><span class="pg-row__id">#002</span><span class="pg-row__name">Componente Beta</span><span class="pg-row__badge pg-row__badge--info">Bozza</span></div>
+          <div class="pg-row"><span class="pg-row__id">#003</span><span class="pg-row__name">Componente Gamma</span><span class="pg-row__badge pg-row__badge--err">Archiviato</span></div>
+        </div>
         <div class="pagination-demo" role="navigation" aria-label="Paginazione">
           <button class="pg-btn arrow pg-prev" aria-label="Pagina precedente">‹</button>
           <button class="pg-btn">1</button>
@@ -2196,16 +2222,62 @@
       },
 
       pagination: (card) => {
-        const btns = $$('.pg-btn:not(.arrow)', card); let active = 1, timer = null;
+        const btns    = $$('.pg-btn:not(.arrow)', card);
+        const content = $('.pg-content', card);
+        const PAGES = [
+          [{ id:'#001', name:'Componente Alpha',   badge:'ok',   label:'Attivo'     },
+           { id:'#002', name:'Componente Beta',    badge:'info', label:'Bozza'      },
+           { id:'#003', name:'Componente Gamma',   badge:'err',  label:'Archiviato' }],
+          [{ id:'#004', name:'Modulo Delta',       badge:'ok',   label:'Attivo'     },
+           { id:'#005', name:'Modulo Epsilon',     badge:'ok',   label:'Attivo'     },
+           { id:'#006', name:'Modulo Zeta',        badge:'info', label:'Bozza'      }],
+          [{ id:'#007', name:'Widget Eta',         badge:'err',  label:'Archiviato' },
+           { id:'#008', name:'Widget Theta',       badge:'ok',   label:'Attivo'     },
+           { id:'#009', name:'Widget Iota',        badge:'info', label:'Bozza'      }],
+          [{ id:'#010', name:'Servizio Kappa',     badge:'ok',   label:'Attivo'     },
+           { id:'#011', name:'Servizio Lambda',    badge:'err',  label:'Archiviato' },
+           { id:'#012', name:'Servizio Mu',        badge:'ok',   label:'Attivo'     }],
+          [{ id:'#013', name:'Elemento Nu',        badge:'info', label:'Bozza'      },
+           { id:'#014', name:'Elemento Xi',        badge:'ok',   label:'Attivo'     },
+           { id:'#015', name:'Elemento Omicron',   badge:'err',  label:'Archiviato' }],
+        ];
+        let active = 1, timer = null;
+
+        const renderPage = (idx, direction) => {
+          // Exit animation
+          content.classList.add('pg-exit');
+          setTimeout(() => {
+            content.classList.remove('pg-exit');
+            // Rebuild rows
+            content.innerHTML = '';
+            PAGES[idx].forEach(row => {
+              const r  = document.createElement('div'); r.className = 'pg-row';
+              const id = document.createElement('span'); id.className = 'pg-row__id';   id.textContent = row.id;
+              const nm = document.createElement('span'); nm.className = 'pg-row__name'; nm.textContent = row.name;
+              const bd = document.createElement('span'); bd.className = `pg-row__badge pg-row__badge--${row.badge}`; bd.textContent = row.label;
+              r.append(id, nm, bd);
+              content.appendChild(r);
+            });
+            // Enter animation
+            content.classList.add('pg-enter');
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => content.classList.remove('pg-enter'));
+            });
+          }, 220);
+        };
+
         const setPg = (i) => {
+          const prev = active;
           active = (i + btns.length) % btns.length;
           btns.forEach((b, j) => {
             b.classList.toggle('active', j === active);
             b.setAttribute('aria-current', j === active ? 'page' : 'false');
           });
+          renderPage(active, active > prev ? 'next' : 'prev');
         };
+
         return {
-          start: () => { timer = setInterval(() => setPg(active + 1), 1400); },
+          start: () => { timer = setInterval(() => setPg(active + 1), 1800); },
           stop:  () => clearInterval(timer)
         };
       },
